@@ -7,8 +7,8 @@ pipeline {
   }
 
   environment {
-    SONAR_URL = "http://54.167.45.171:9000"
-    DOCKER_IMAGE = "iambdur/ultimate-cicd:${BUILD_NUMBER}"
+    SONAR_URL     = "http://54.167.45.171:9000"
+    DOCKER_IMAGE  = "iambdur/ultimate-cicd:${BUILD_NUMBER}"
     GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
     GIT_USER_NAME = "abdur-s"
   }
@@ -17,7 +17,7 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        sh 'echo "Checkout successful"'
+        echo "Checkout successful"
         // git branch: 'main', url: 'https://github.com/Abdur-S/Jenkins-Zero-To-Hero.git'
       }
     }
@@ -36,10 +36,12 @@ pipeline {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-            mvn clean verify sonar:sonar \
+
+            mvn clean verify
+
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
               -Dsonar.login=$SONAR_AUTH_TOKEN \
-              -Dsonar.host.url=${SONAR_URL} \
-              -Dsonar.maven.plugin.version=3.10.0.2594
+              -Dsonar.host.url=${SONAR_URL}
           '''
         }
       }
@@ -77,6 +79,5 @@ pipeline {
         }
       }
     }
-
   }
 }
