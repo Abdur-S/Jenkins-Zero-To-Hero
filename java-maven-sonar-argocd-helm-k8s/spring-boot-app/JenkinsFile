@@ -12,9 +12,7 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        echo "Checkout successful"
-        // Uncomment to actually checkout:
-        // git branch: 'main', url: 'https://github.com/Abdur-S/Jenkins-Zero-To-Hero.git'
+        git branch: 'main', url: 'https://github.com/Abdur-S/Jenkins-Zero-To-Hero.git'
       }
     }
 
@@ -42,10 +40,9 @@ pipeline {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-
             mvn clean verify
 
-            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+            mvn sonar:sonar \
               -Dsonar.login=$SONAR_AUTH_TOKEN \
               -Dsonar.host.url=${SONAR_URL}
           '''
@@ -56,14 +53,12 @@ pipeline {
     stage('Build and Push Docker Image') {
       steps {
         script {
-          // Build Docker image
           sh '''
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
             docker build -t ${DOCKER_IMAGE} .
           '''
 
-          // Push Docker image to DockerHub
-          docker.withRegistry('', 'docker-cred') { // '' uses default DockerHub
+          docker.withRegistry('', 'docker-cred') {
             docker.image("${DOCKER_IMAGE}").push()
           }
         }
@@ -81,12 +76,11 @@ pipeline {
               java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
 
             git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+            git commit -m "Update image tag to ${BUILD_NUMBER}"
             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
           '''
         }
       }
     }
-
-  } // stages
-} // pipeline
+  }
+}
